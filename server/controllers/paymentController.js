@@ -53,11 +53,15 @@ const createPaymentOrder = async (req, res) => {
     // Calculate amount (in paise for Razorpay)
     const amount = Math.round(order.finalPrice * 100);
 
-    // Create Razorpay order
+    // Create Razorpay order with short receipt (max 40 chars)
+    const timestamp = Date.now().toString().slice(-8); // Last 8 digits
+    const shortOrderId = orderId.slice(-8); // Last 8 chars of order ID
+    const receipt = `WM_${shortOrderId}_${timestamp}`.slice(0, 40);
+    
     const razorpayOrder = await razorpay.orders.create({
       amount,
       currency: 'INR',
-      receipt: `order_${orderId}_${Date.now()}`,
+      receipt: receipt,
       payment_capture: 1
     });
 

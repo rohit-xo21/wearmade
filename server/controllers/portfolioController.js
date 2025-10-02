@@ -11,25 +11,48 @@ const createPortfolioItem = async (req, res) => {
       description,
       category,
       tags,
-      priceRange,
       timeToComplete,
       materials,
       clientType,
       difficulty
     } = req.body;
 
-    // Process uploaded images
-    let images = [];
-    if (req.files && req.files.length > 0) {
-      images = req.files.map(file => ({
-        url: file.path,
-        publicId: file.filename,
-        caption: file.originalname
-      }));
+    // Debug: Log the request body to see what we're receiving
+    console.log('Request body:', req.body);
+    console.log('Price min:', req.body['priceRange[min]']);
+    console.log('Price max:', req.body['priceRange[max]']);
+
+    // Parse priceRange from FormData structure
+    const minPrice = req.body['priceRange[min]'];
+    const maxPrice = req.body['priceRange[max]'];
+    
+    const priceRange = {
+      min: minPrice ? parseFloat(minPrice) : 0,
+      max: maxPrice ? parseFloat(maxPrice) : 0
+    };
+
+    // Validate parsed prices
+    if (isNaN(priceRange.min) || isNaN(priceRange.max)) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Invalid price range values',
+        debug: {
+          minPrice,
+          maxPrice,
+          parsedMin: priceRange.min,
+          parsedMax: priceRange.max
+        }
+      });
     }
 
+    // Use processed images from middleware
+    const images = req.uploadedImages || [];
+
     if (images.length === 0) {
-      return res.status(400).json({ message: 'At least one image is required' });
+      return res.status(400).json({ 
+        success: false,
+        message: 'At least one image is required' 
+      });
     }
 
     const portfolioItem = new Portfolio({

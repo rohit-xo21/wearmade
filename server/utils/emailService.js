@@ -1,28 +1,48 @@
 const nodemailer = require('nodemailer');
 
-// Create reusable transporter object using the default SMTP transport
 const transporter = nodemailer.createTransport({
   service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
+  tls: {
+    rejectUnauthorized: false
+  }
 });
 
 const sendEmail = async (options) => {
-  const message = {
-    from: `WearMade <${process.env.EMAIL_USER}>`,
-    to: options.email,
-    subject: options.subject,
-    html: options.html || options.message,
-  };
+  try {
+    const message = {
+      from: `WearMade <${process.env.EMAIL_USER}>`,
+      to: options.email,
+      subject: options.subject,
+      html: options.html || options.message,
+    };
 
-  const info = await transporter.sendMail(message);
-  console.log('Message sent: %s', info.messageId);
-  return info;
+    // Try to send the email
+    const info = await transporter.sendMail(message);
+    console.log('✅ Email sent successfully to:', options.email);
+    console.log('Message ID:', info.messageId);
+    return info;
+  } catch (error) {
+    console.error('❌ Email sending error:', error.message);
+    
+    // In development, log what would have been sent but don't throw error
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('📧 Email failed to send, here\'s what would have been sent:');
+      console.log('To:', options.email);
+      console.log('Subject:', options.subject);
+      console.log('---');
+      return { messageId: 'dev-fallback-' + Date.now() };
+    }
+    throw error;
+  }
 };
 
-// Email templates
 const emailTemplates = {
   welcome: (name) => `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -30,18 +50,6 @@ const emailTemplates = {
       <p>Hi ${name},</p>
       <p>Thank you for joining WearMade, your premier custom tailoring platform.</p>
       <p>Get started by exploring our talented tailors or creating your first order.</p>
-      <p>Best regards,<br>The WearMade Team</p>
-    </div>
-  `,
-  
-  emailVerification: (name, verificationUrl) => `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2 style="color: #333;">Verify Your Email</h2>
-      <p>Hi ${name},</p>
-      <p>Please click the button below to verify your email address:</p>
-      <a href="${verificationUrl}" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0;">Verify Email</a>
-      <p>If the button doesn't work, copy and paste this link: ${verificationUrl}</p>
-      <p>This link will expire in 24 hours.</p>
       <p>Best regards,<br>The WearMade Team</p>
     </div>
   `,
