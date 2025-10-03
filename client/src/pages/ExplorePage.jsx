@@ -21,7 +21,13 @@ const ExplorePage = () => {
     }
   };
 
-  if (loading) return <div className="loading">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-2 border-gray-900 border-t-transparent"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -101,18 +107,12 @@ const ExplorePage = () => {
                       </div>
                       
                       {/* Actions */}
-                      <div className="flex gap-3 pt-4">
+                      <div className="pt-4">
                         <Link 
                           to={`/tailor/${item.tailor._id}/portfolio`} 
-                          className="flex-1 text-center border border-gray-300 text-gray-700 py-3 px-4 rounded-full text-sm font-medium hover:border-gray-900 hover:text-gray-900 transition-colors cursor-pointer"
+                          className="block text-center border border-gray-300 text-gray-700 py-3 px-4 rounded-full text-sm font-medium hover:border-gray-900 hover:text-gray-900 transition-colors cursor-pointer"
                         >
                           View Portfolio
-                        </Link>
-                        <Link 
-                          to={`/customer/new-order?tailorId=${item.tailor._id}`} 
-                          className="flex-1 text-center bg-gray-900 text-white py-3 px-4 rounded-full text-sm font-medium hover:bg-gray-800 transition-colors cursor-pointer"
-                        >
-                          Request Quote
                         </Link>
                       </div>
                     </div>

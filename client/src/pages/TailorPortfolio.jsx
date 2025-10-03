@@ -121,14 +121,7 @@ const TailorPortfolio = () => {
           )}
         </div>
 
-        <div className="flex gap-4 mt-8">
-          <Link 
-            to={`/customer/new-order?tailorId=${id}`} 
-            className="bg-gray-900 text-white px-6 py-3 rounded-full font-medium hover:bg-gray-800 transition-colors"
-          >
-            Request Quote
-          </Link>
-        </div>
+
       </div>
 
       {/* Portfolio Section */}

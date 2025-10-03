@@ -43,8 +43,37 @@ const RequestDetails = () => {
     setSubmitting(true);
     setError('');
 
+    // Client-side validation
+    const price = parseFloat(estimate.price);
+    const deliveryTime = parseInt(estimate.deliveryTime);
+
+    // Validate price range
+    if (order.budget && order.budget.min && order.budget.max) {
+      if (price < order.budget.min || price > order.budget.max) {
+        setError(`Price must be between $${order.budget.min} and $${order.budget.max}`);
+        setSubmitting(false);
+        return;
+      }
+    }
+
+    // Validate delivery time
+    if (order.preferredDeliveryDate) {
+      const today = new Date();
+      const maxDeliveryTime = Math.ceil((new Date(order.preferredDeliveryDate) - today) / (1000 * 60 * 60 * 24));
+      
+      if (deliveryTime > maxDeliveryTime) {
+        setError(`Delivery time cannot exceed ${maxDeliveryTime} days (customer's deadline)`);
+        setSubmitting(false);
+        return;
+      }
+    }
+
     try {
-      await api.post(`/orders/${id}/estimate`, estimate);
+      await api.post(`/orders/${id}/estimate`, {
+        price,
+        deliveryTime,
+        message: estimate.message
+      });
       navigate('/tailor/requests');
     } catch (error) {
       setError(error.response?.data?.message || 'Failed to submit estimate');
@@ -188,30 +217,54 @@ const RequestDetails = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Price ($)
+                {order.budget && order.budget.min && order.budget.max && (
+                  <span className="ml-2 text-sm text-gray-500">
+                    (Range: ${order.budget.min} - ${order.budget.max})
+                  </span>
+                )}
               </label>
               <input
                 type="number"
                 name="price"
                 value={estimate.price}
                 onChange={handleEstimateChange}
+                min={order.budget?.min || 0}
+                max={order.budget?.max || undefined}
+                step="0.01"
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-colors"
-                placeholder="Enter your price"
+                placeholder={order.budget ? `Between $${order.budget.min} - $${order.budget.max}` : "Enter your price"}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Delivery Time (days)
+                {order.preferredDeliveryDate && (() => {
+                  const today = new Date();
+                  const maxDays = Math.ceil((new Date(order.preferredDeliveryDate) - today) / (1000 * 60 * 60 * 24));
+                  return (
+                    <span className="ml-2 text-sm text-gray-500">
+                      (Max: {maxDays} days)
+                    </span>
+                  );
+                })()}
               </label>
               <input
                 type="number"
                 name="deliveryTime"
                 value={estimate.deliveryTime}
                 onChange={handleEstimateChange}
+                min="1"
+                max={order.preferredDeliveryDate && (() => {
+                  const today = new Date();
+                  return Math.ceil((new Date(order.preferredDeliveryDate) - today) / (1000 * 60 * 60 * 24));
+                })()}
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-colors"
-                placeholder="Enter delivery time"
+                placeholder={order.preferredDeliveryDate ? 
+                  `Max ${Math.ceil((new Date(order.preferredDeliveryDate) - new Date()) / (1000 * 60 * 60 * 24))} days` : 
+                  "Enter delivery time"}
               />
             </div>
           </div>
