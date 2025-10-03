@@ -4,9 +4,24 @@ import api from '../api/axios';
 let socketInstance = null;
 
 function resolveServerUrl() {
-  // api.defaults.baseURL like http://localhost:5000/api
+  // First try to get from environment variable
+  const envApiUrl = import.meta.env.VITE_API_URL;
+  if (envApiUrl) {
+    try {
+      const url = new URL(envApiUrl);
+      // strip trailing /api if present
+      if (url.pathname.endsWith('/api')) {
+        url.pathname = url.pathname.replace(/\/api$/, '');
+      }
+      return url.origin + url.pathname;
+    } catch {
+      // fallback to extracting from axios baseURL
+    }
+  }
+  
+  // Fallback: extract from api.defaults.baseURL
   const base = api.defaults.baseURL || '';
-  if (!base) return 'http://localhost:5000';
+  if (!base) return import.meta.env.VITE_SERVER_URL || 'http://localhost:5000';
   try {
     const url = new URL(base);
     // strip trailing /api if present
@@ -15,7 +30,7 @@ function resolveServerUrl() {
     }
     return url.origin + url.pathname;
   } catch {
-    return 'http://localhost:5000';
+    return import.meta.env.VITE_SERVER_URL || 'http://localhost:5000';
   }
 }
 
