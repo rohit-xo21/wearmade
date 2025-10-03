@@ -116,6 +116,28 @@ const emailTemplates = {
       <a href="${process.env.CLIENT_URL}/customer/dashboard" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0;">Track Order</a>
       <p>Best regards,<br>The WearMade Team</p>
     </div>
+  `,
+
+  tailorPaymentNotification: (tailorName, customerName, orderTitle, amount) => `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #28a745;">Payment Received - Work Can Begin!</h2>
+      <p>Hi ${tailorName},</p>
+      <p>Great news! ${customerName} has completed the payment for your order. You can now begin working on the project.</p>
+      <div style="background-color: #d4edda; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #28a745;">
+        <p><strong>Order:</strong> ${orderTitle}</p>
+        <p><strong>Customer:</strong> ${customerName}</p>
+        <p><strong>Amount:</strong> ₹${amount}</p>
+        <p><strong>Status:</strong> Work can now begin</p>
+      </div>
+      <p>You can now:</p>
+      <ul>
+        <li>Start working on the order</li>
+        <li>Chat with the customer for any clarifications</li>
+        <li>Update progress in your dashboard</li>
+      </ul>
+      <a href="${process.env.CLIENT_URL}/tailor/orders" style="display: inline-block; padding: 12px 24px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0;">Start Working</a>
+      <p>Best regards,<br>The WearMade Team</p>
+    </div>
   `
 };
 

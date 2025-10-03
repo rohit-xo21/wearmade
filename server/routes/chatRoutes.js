@@ -4,7 +4,8 @@ const {
   getChatByOrder,
   sendMessage,
   getUserChats,
-  markAsRead
+  markAsRead,
+  getUnreadCount
 } = require('../controllers/chatController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -20,6 +21,11 @@ router.post('/', protect, createOrGetChat);
 // @access  Private
 router.get('/', protect, getUserChats);
 
+// @desc    Get unread message count
+// @route   GET /api/chat/unread-count
+// @access  Private
+router.get('/unread-count', protect, getUnreadCount);
+
 // @desc    Get chat by order ID
 // @route   GET /api/chat/order/:orderId
 // @access  Private
@@ -34,5 +40,11 @@ router.post('/:chatId/message', protect, sendMessage);
 // @route   PUT /api/chat/:chatId/read
 // @access  Private
 router.put('/:chatId/read', protect, markAsRead);
+
+// @desc    Leave chat
+// @route   POST /api/chat/:chatId/leave
+// @access  Private
+const { leaveChat } = require('../controllers/chatController');
+router.post('/:chatId/leave', protect, leaveChat);
 
 module.exports = router;

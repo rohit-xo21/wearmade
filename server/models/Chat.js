@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const mongoosePaginate = require('mongoose-paginate-v2');
 
 const chatSchema = new mongoose.Schema({
   order: {
@@ -39,7 +40,12 @@ const chatSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
-  }
+  },
+  participantsLeft: {
+    customer: { type: Boolean, default: false },
+    tailor: { type: Boolean, default: false }
+  },
+  closedAt: { type: Date }
 }, {
   timestamps: true
 });
@@ -48,5 +54,7 @@ const chatSchema = new mongoose.Schema({
 chatSchema.index({ order: 1 });
 chatSchema.index({ customer: 1, tailor: 1 });
 chatSchema.index({ 'messages.timestamp': -1 });
+
+chatSchema.plugin(mongoosePaginate);
 
 module.exports = mongoose.model('Chat', chatSchema);

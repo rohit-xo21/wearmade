@@ -5,7 +5,7 @@ const Card = React.forwardRef(({ className, ...props }, ref) => (
   <div
     ref={ref}
     className={clsx(
-      'rounded-xl border border-gray-200 bg-white shadow-sm',
+      'rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow duration-300',
       className
     )}
     {...props}
@@ -25,7 +25,7 @@ CardHeader.displayName = 'CardHeader'
 const CardTitle = React.forwardRef(({ className, ...props }, ref) => (
   <h3
     ref={ref}
-    className={clsx('font-semibold leading-none tracking-tight', className)}
+    className={clsx('font-medium leading-none tracking-tight text-gray-900', className)}
     {...props}
   />
 ))

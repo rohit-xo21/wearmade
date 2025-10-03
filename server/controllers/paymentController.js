@@ -136,14 +136,14 @@ const verifyPayment = async (req, res) => {
       // Payment successful
       await payment.markAsCompleted(razorpay_payment_id, razorpay_signature);
 
-      // Update order status
-      const order = await Order.findById(payment.order._id);
+      // Update order status and populate tailor info
+      const order = await Order.findById(payment.order._id).populate('tailor', 'name email');
       if (order.status === 'accepted') {
         order.status = 'in_progress';
         await order.save();
       }
 
-      // Send confirmation email
+      // Send confirmation email to customer
       try {
         await sendEmail({
           email: payment.customer.email,
@@ -157,6 +157,24 @@ const verifyPayment = async (req, res) => {
         });
       } catch (error) {
         console.error('Payment confirmation email error:', error);
+      }
+
+      // Send notification email to tailor
+      try {
+        if (order.tailor && order.tailor.email) {
+          await sendEmail({
+            email: order.tailor.email,
+            subject: 'Payment Received - Work Can Begin - WearMade',
+            html: emailTemplates.tailorPaymentNotification(
+              order.tailor.name,
+              payment.customer.name,
+              order.title,
+              payment.amount
+            )
+          });
+        }
+      } catch (error) {
+        console.error('Tailor notification email error:', error);
       }
 
       res.json({

@@ -329,3 +329,24 @@ a:hover {
     grid-template-columns: 1fr;
   }
 }
+
+/* Notification Badge */
+.notification-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: #ff4444;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  min-width: 20px;
+  padding: 0 2px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
