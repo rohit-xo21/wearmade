@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react'
-import axios from 'axios'
+import api from '../api/axios'
 import toast from 'react-hot-toast'
 
 const AuthContext = createContext()
 
 const initialState = {
   user: null,
-  token: localStorage.getItem('token'),
+  token: localStorage.getItem('accessToken'),
   isAuthenticated: false,
   loading: true
 }
@@ -16,7 +16,7 @@ function authReducer(state, action) {
     case 'SET_LOADING':
       return { ...state, loading: action.payload }
     case 'LOGIN_SUCCESS':
-      localStorage.setItem('token', action.payload.token)
+      localStorage.setItem('accessToken', action.payload.token)
       return {
         ...state,
         user: action.payload.user,
@@ -25,7 +25,7 @@ function authReducer(state, action) {
         loading: false
       }
     case 'LOGOUT':
-      localStorage.removeItem('token')
+      localStorage.removeItem('accessToken')
       return {
         ...state,
         user: null,
@@ -34,7 +34,7 @@ function authReducer(state, action) {
         loading: false
       }
     case 'AUTH_ERROR':
-      localStorage.removeItem('token')
+      localStorage.removeItem('accessToken')
       return {
         ...state,
         user: null,
@@ -50,29 +50,20 @@ function authReducer(state, action) {
 export function AuthProvider({ children }) {
   const [state, dispatch] = useReducer(authReducer, initialState)
 
-  // Set axios default header if token exists
-  useEffect(() => {
-    if (state.token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${state.token}`
-    } else {
-      delete axios.defaults.headers.common['Authorization']
-    }
-  }, [state.token])
-
   // Load user on app start
   useEffect(() => {
     loadUser()
   }, [])
 
   const loadUser = async () => {
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('accessToken')
     if (!token) {
       dispatch({ type: 'SET_LOADING', payload: false })
       return
     }
 
     try {
-      const res = await axios.get('/api/auth/me')
+      const res = await api.get('/auth/me')
       dispatch({ 
         type: 'LOGIN_SUCCESS', 
         payload: { user: res.data.data, token } 
@@ -85,7 +76,7 @@ export function AuthProvider({ children }) {
 
   const login = async (credentials) => {
     try {
-      const res = await axios.post('/api/auth/login', credentials)
+      const res = await api.post('/auth/login', credentials)
       dispatch({ 
         type: 'LOGIN_SUCCESS', 
         payload: res.data.data 
@@ -101,7 +92,7 @@ export function AuthProvider({ children }) {
 
   const register = async (userData) => {
     try {
-      const res = await axios.post('/api/auth/register', userData)
+      const res = await api.post('/auth/register', userData)
       dispatch({ 
         type: 'LOGIN_SUCCESS', 
         payload: res.data.data 

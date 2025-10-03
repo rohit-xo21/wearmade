@@ -97,7 +97,15 @@ const getOrders = async (req, res) => {
     }
 
     // Additional filters
-    if (status) query.status = status;
+    if (status) {
+      // Handle multiple status values (comma-separated)
+      if (status.includes(',')) {
+        const statusArray = status.split(',').map(s => s.trim());
+        query.status = { $in: statusArray };
+      } else {
+        query.status = status;
+      }
+    }
     if (category) query.category = category;
 
     const options = {
@@ -529,6 +537,61 @@ const cancelOrder = async (req, res) => {
   }
 };
 
+// @desc    Add review to completed order
+// @route   POST /api/orders/:id/review
+// @access  Private (Customer only)
+const addReview = async (req, res) => {
+  try {
+    const { rating, comment } = req.body;
+
+    const order = await Order.findById(req.params.id)
+      .populate('tailor', 'name shopName');
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // Check if user owns this order
+    if (order.customer.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    // Check if order is completed
+    if (order.status !== 'completed') {
+      return res.status(400).json({ 
+        message: 'Can only review completed orders' 
+      });
+    }
+
+    // Check if review already exists
+    if (order.review && order.review.customer) {
+      return res.status(400).json({ 
+        message: 'Review already submitted for this order' 
+      });
+    }
+
+    // Add customer review
+    order.review = {
+      customer: {
+        rating,
+        comment,
+        createdAt: new Date()
+      }
+    };
+
+    await order.save();
+
+    res.json({
+      success: true,
+      message: 'Review submitted successfully',
+      data: order
+    });
+  } catch (error) {
+    console.error('Add review error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   createOrder,
   getOrders,
@@ -539,5 +602,6 @@ module.exports = {
   acceptEstimate,
   updateProgress,
   completeOrder,
-  cancelOrder
+  cancelOrder,
+  addReview
 };

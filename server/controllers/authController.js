@@ -197,16 +197,31 @@ const forgotPassword = async (req, res) => {
     const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
 
     try {
-      await sendEmail({
-        email: user.email,
-        subject: 'Password Reset - WearMade',
-        html: emailTemplates.resetPassword(user.name, resetUrl)
-      });
+      if (process.env.NODE_ENV === 'development') {
+        // In development, log the reset URL instead of sending email
+        console.log('🔗 Password Reset URL (Development Mode):');
+        console.log(resetUrl);
+        console.log('This would be sent to:', user.email);
+        
+        res.json({
+          success: true,
+          message: 'Password reset email sent',
+          // Include reset URL in development for testing
+          resetUrl: resetUrl
+        });
+      } else {
+        // In production, send actual email
+        await sendEmail({
+          email: user.email,
+          subject: 'Password Reset - WearMade',
+          html: emailTemplates.resetPassword(user.name, resetUrl)
+        });
 
-      res.json({
-        success: true,
-        message: 'Password reset email sent'
-      });
+        res.json({
+          success: true,
+          message: 'Password reset email sent'
+        });
+      }
     } catch (error) {
       user.resetPasswordToken = undefined;
       user.resetPasswordExpire = undefined;

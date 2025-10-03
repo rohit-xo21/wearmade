@@ -63,7 +63,7 @@ const validateOrder = [
     .isNumeric()
     .withMessage('Maximum budget must be a number')
     .custom((value, { req }) => {
-      if (req.body.budget && req.body.budget.min && value < req.body.budget.min) {
+      if (req.body.budget && req.body.budget.min && parseFloat(value) <= parseFloat(req.body.budget.min)) {
         throw new Error('Maximum budget must be greater than minimum budget');
       }
       return true;
@@ -83,14 +83,16 @@ const validatePortfolio = [
   body('category')
     .isIn(['suit', 'dress', 'shirt', 'pants', 'skirt', 'jacket', 'blouse', 'traditional', 'formal', 'casual', 'other'])
     .withMessage('Please select a valid category'),
-  body('priceRange.min')
+  body('priceRange[min]')
     .isNumeric()
     .withMessage('Minimum price must be a number'),
-  body('priceRange.max')
+  body('priceRange[max]')
     .isNumeric()
     .withMessage('Maximum price must be a number')
     .custom((value, { req }) => {
-      if (value < req.body.priceRange.min) {
+      const minPrice = parseFloat(req.body['priceRange[min]']);
+      const maxPrice = parseFloat(value);
+      if (maxPrice <= minPrice) {
         throw new Error('Maximum price must be greater than minimum price');
       }
       return true;
@@ -147,9 +149,6 @@ const validateProfileUpdate = [
 
 // Password reset validation
 const validatePasswordReset = [
-  body('token')
-    .notEmpty()
-    .withMessage('Reset token is required'),
   body('password')
     .isLength({ min: 6 })
     .withMessage('Password must be at least 6 characters long')

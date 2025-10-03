@@ -13,6 +13,7 @@ const {
 } = require('../controllers/portfolioController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 const { uploadMultiple } = require('../middleware/upload');
+const { processImages } = require('../middleware/cloudinaryUpload');
 const {
   validatePortfolio,
   handleValidationErrors
@@ -27,6 +28,7 @@ router.post('/',
   protect, 
   authorize('tailor'),
   uploadMultiple,
+  processImages,
   validatePortfolio, 
   handleValidationErrors, 
   createPortfolioItem
