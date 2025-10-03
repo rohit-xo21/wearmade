@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { getSocket } from '../../lib/socket';
 import api from '../../api/axios';
 
 const ChatWindow = ({ orderId, onClose }) => {
@@ -11,6 +12,20 @@ const ChatWindow = ({ orderId, onClose }) => {
   useEffect(() => {
     fetchChat();
   }, [orderId]);
+
+  useEffect(() => {
+    if (!chat?._id) return;
+    const socket = getSocket();
+
+    socket.emit('chat:join', { chatId: chat._id });
+
+    socket.on('chat:message', ({ chatId, message }) => {
+      if (chatId !== chat._id) return;
+      setChat(prev => ({ ...prev, messages: [...prev.messages, message] }));
+    });
+
+    return () => {};
+  }, [chat?._id]);
 
   useEffect(() => {
     scrollToBottom();
@@ -37,16 +52,8 @@ const ChatWindow = ({ orderId, onClose }) => {
 
     setSending(true);
     try {
-      const response = await api.post(`/chat/${chat._id}/message`, {
-        message: message.trim()
-      });
-      
-      // Update chat with new message
-      setChat(prev => ({
-        ...prev,
-        messages: [...prev.messages, response.data.data]
-      }));
-      
+      const socket = getSocket();
+      socket.emit('chat:message', { chatId: chat._id, message: message.trim() });
       setMessage('');
     } catch (error) {
       console.error('Failed to send message:', error);
@@ -77,12 +84,19 @@ const ChatWindow = ({ orderId, onClose }) => {
     );
   }
 
+  const chatDisabled = chat && (chat.isActive === false);
+
   return (
     <div className="chat-window">
       <div className="chat-header">
         <div>
           <h3>Chat for Order</h3>
           <p>Customer: {chat.customer.name} | Tailor: {chat.tailor.name}</p>
+          {chatDisabled && (
+            <p style={{ color: '#b00', fontSize: '12px' }}>
+              Chat is closed for this order.
+            </p>
+          )}
         </div>
         <button onClick={onClose} className="close-btn">&times;</button>
       </div>
@@ -113,9 +127,9 @@ const ChatWindow = ({ orderId, onClose }) => {
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Type your message..."
-          disabled={sending}
+          disabled={sending || chatDisabled}
         />
-        <button type="submit" disabled={sending || !message.trim()}>
+        <button type="submit" disabled={sending || !message.trim() || chatDisabled}>
           {sending ? 'Sending...' : 'Send'}
         </button>
       </form>

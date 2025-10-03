@@ -40,11 +40,17 @@ const createOrGetChat = async (req, res) => {
       await chat.save();
     }
 
+    // If order is not active, disable chat
+    const isOrderActive = ['accepted', 'in_progress', 'ready'].includes(order.status);
+    chat.isActive = isOrderActive && !(chat.participantsLeft?.customer && chat.participantsLeft?.tailor);
+    if (!chat.isActive && !chat.closedAt) chat.closedAt = new Date();
+
     // Populate the chat with user details
     await chat.populate([
       { path: 'customer', select: 'name email avatar' },
       { path: 'tailor', select: 'name email avatar' },
-      { path: 'messages.sender', select: 'name avatar' }
+      { path: 'messages.sender', select: 'name avatar' },
+      { path: 'order', select: 'status title' }
     ]);
 
     res.json({
@@ -67,7 +73,8 @@ const getChatByOrder = async (req, res) => {
     const chat = await Chat.findOne({ order: orderId })
       .populate('customer', 'name email avatar')
       .populate('tailor', 'name email avatar')
-      .populate('messages.sender', 'name avatar');
+      .populate('messages.sender', 'name avatar')
+      .populate('order', 'status title');
 
     if (!chat) {
       return res.status(404).json({ message: 'Chat not found' });
@@ -81,6 +88,12 @@ const getChatByOrder = async (req, res) => {
     if (!hasAccess) {
       return res.status(403).json({ message: 'Access denied' });
     }
+
+    // Update isActive based on order status and participants left
+    const order = await Order.findById(orderId).select('status');
+    const isOrderActive = ['accepted', 'in_progress', 'ready'].includes(order?.status);
+    chat.isActive = isOrderActive && !(chat.participantsLeft?.customer && chat.participantsLeft?.tailor);
+    if (!chat.isActive && !chat.closedAt) chat.closedAt = new Date();
 
     res.json({
       success: true,
@@ -100,7 +113,7 @@ const sendMessage = async (req, res) => {
     const { chatId } = req.params;
     const { message } = req.body;
 
-    const chat = await Chat.findById(chatId);
+    const chat = await Chat.findById(chatId).populate('order', 'status');
 
     if (!chat) {
       return res.status(404).json({ message: 'Chat not found' });
@@ -113,6 +126,13 @@ const sendMessage = async (req, res) => {
 
     if (!hasAccess) {
       return res.status(403).json({ message: 'Access denied' });
+    }
+
+    // Block sending if chat inactive
+    const isOrderActive = ['accepted', 'in_progress', 'ready'].includes(chat.order?.status);
+    const isChatActive = chat.isActive !== false && isOrderActive && !(chat.participantsLeft?.customer && chat.participantsLeft?.tailor);
+    if (!isChatActive) {
+      return res.status(400).json({ message: 'Chat is closed for this order' });
     }
 
     // Add message to chat
@@ -158,7 +178,8 @@ const getUserChats = async (req, res) => {
       populate: [
         { path: 'customer', select: 'name email avatar' },
         { path: 'tailor', select: 'name email avatar' },
-        { path: 'order', select: 'title status' }
+        { path: 'order', select: 'title status' },
+        { path: 'messages.sender', select: 'name avatar' }
       ]
     };
 
@@ -215,10 +236,75 @@ const markAsRead = async (req, res) => {
   }
 };
 
+// @desc    Get unread message count
+// @route   GET /api/chat/unread-count
+// @access  Private
+const getUnreadCount = async (req, res) => {
+  try {
+    let query = {};
+    if (req.user.role === 'customer') {
+      query.customer = req.user.id;
+    } else if (req.user.role === 'tailor') {
+      query.tailor = req.user.id;
+    }
+
+    const chats = await Chat.find(query);
+    
+    let unreadCount = 0;
+    chats.forEach(chat => {
+      // Count messages not sent by current user and not read
+      const unreadMessages = chat.messages.filter(msg => 
+        msg.sender.toString() !== req.user.id && !msg.isRead
+      );
+      unreadCount += unreadMessages.length;
+    });
+
+    res.json({
+      success: true,
+      data: { unreadCount }
+    });
+  } catch (error) {
+    console.error('Get unread count error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// @desc    Leave chat (participant)
+// @route   POST /api/chat/:chatId/leave
+// @access  Private
+const leaveChat = async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    const chat = await Chat.findById(chatId);
+    if (!chat) return res.status(404).json({ message: 'Chat not found' });
+
+    const isCustomer = chat.customer.toString() === req.user.id;
+    const isTailor = chat.tailor.toString() === req.user.id;
+    if (!isCustomer && !isTailor) return res.status(403).json({ message: 'Access denied' });
+
+    if (isCustomer) chat.participantsLeft.customer = true;
+    if (isTailor) chat.participantsLeft.tailor = true;
+
+    // Close chat if both left or order completed/cancelled
+    const order = await Order.findById(chat.order).select('status');
+    const isOrderActive = ['accepted', 'in_progress', 'ready'].includes(order?.status);
+    chat.isActive = isOrderActive && !(chat.participantsLeft.customer && chat.participantsLeft.tailor);
+    if (!chat.isActive) chat.closedAt = new Date();
+
+    await chat.save();
+    res.json({ success: true, data: { isActive: chat.isActive, participantsLeft: chat.participantsLeft } });
+  } catch (error) {
+    console.error('Leave chat error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   createOrGetChat,
   getChatByOrder,
   sendMessage,
   getUserChats,
-  markAsRead
+  markAsRead,
+  getUnreadCount,
+  leaveChat
 };
