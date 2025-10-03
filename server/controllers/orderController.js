@@ -281,6 +281,27 @@ const submitEstimate = async (req, res) => {
       });
     }
 
+    // Validate price is within customer's budget range
+    if (order.budget && order.budget.min && order.budget.max) {
+      if (price < order.budget.min || price > order.budget.max) {
+        return res.status(400).json({ 
+          message: `Price must be between $${order.budget.min} and $${order.budget.max}` 
+        });
+      }
+    }
+
+    // Validate delivery time doesn't exceed customer's deadline
+    if (order.preferredDeliveryDate) {
+      const today = new Date();
+      const maxDeliveryTime = Math.ceil((new Date(order.preferredDeliveryDate) - today) / (1000 * 60 * 60 * 24));
+      
+      if (deliveryTime > maxDeliveryTime) {
+        return res.status(400).json({ 
+          message: `Delivery time cannot exceed ${maxDeliveryTime} days (customer's deadline)` 
+        });
+      }
+    }
+
     // Add estimate
     order.estimates.push({
       tailor: req.user.id,

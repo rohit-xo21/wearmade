@@ -70,19 +70,42 @@ const NewOrder = () => {
       return;
     }
 
+    // Validate all measurements are provided
+    const { chest, waist, shoulders, armLength } = formData.measurements;
+    if (!chest || !waist || !shoulders || !armLength) {
+      setError('Please provide all required measurements');
+      setLoading(false);
+      return;
+    }
+
     try {
       // Transform the data to match backend expectations
       const orderData = {
-        ...formData,
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        measurements: {
+          chest: parseFloat(chest),
+          waist: parseFloat(waist),
+          shoulders: parseFloat(shoulders),
+          armLength: parseFloat(armLength)
+        },
+        requirements: formData.requirements,
+        budget: {
+          min: minBudget,
+          max: maxBudget
+        },
         preferredDeliveryDate: formData.deadline
       };
-      delete orderData.deadline; // Remove the old field name
+
+      console.log('Sending order data:', orderData); // Debug log
 
       const response = await api.post('/orders', orderData);
       if (response.data.success) {
         navigate('/customer/orders');
       }
     } catch (error) {
+      console.error('Order creation error:', error);
       setError(error.response?.data?.message || 'Failed to create order');
     } finally {
       setLoading(false);
@@ -94,7 +117,11 @@ const NewOrder = () => {
       case 1:
         return formData.title && formData.category && formData.description;
       case 2:
-        return formData.measurements.chest && formData.measurements.waist;
+        // Require all 4 measurements
+        return formData.measurements.chest && 
+               formData.measurements.waist && 
+               formData.measurements.shoulders && 
+               formData.measurements.armLength;
       case 3:
         return true; // Optional fields
       case 4: {
@@ -243,7 +270,7 @@ const NewOrder = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Chest (inches)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Chest (inches) *</label>
                   <input
                     type="number"
                     name="chest"
@@ -256,7 +283,7 @@ const NewOrder = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Waist (inches)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Waist (inches) *</label>
                   <input
                     type="number"
                     name="waist"
@@ -269,7 +296,7 @@ const NewOrder = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Shoulders (inches)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Shoulders (inches) *</label>
                   <input
                     type="number"
                     name="shoulders"
@@ -277,11 +304,12 @@ const NewOrder = () => {
                     onChange={(e) => handleChange(e, 'measurements')}
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-colors"
                     placeholder="e.g., 18"
+                    required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Arm Length (inches)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Arm Length (inches) *</label>
                   <input
                     type="number"
                     name="armLength"
@@ -289,6 +317,7 @@ const NewOrder = () => {
                     onChange={(e) => handleChange(e, 'measurements')}
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-colors"
                     placeholder="e.g., 24"
+                    required
                   />
                 </div>
               </div>

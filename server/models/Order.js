@@ -62,8 +62,9 @@ const orderSchema = new mongoose.Schema({
   measurements: {
     chest: Number,
     waist: Number,
+    shoulders: Number, // Changed from 'shoulder' to 'shoulders'
+    armLength: Number, // Added armLength field
     hip: Number,
-    shoulder: Number,
     sleeve: Number,
     neck: Number,
     inseam: Number,
