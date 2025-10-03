@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
+import ChatButton from '../../components/chat/ChatButton';
 
 const RequestDetails = () => {
   const [order, setOrder] = useState(null);
@@ -85,6 +86,17 @@ const RequestDetails = () => {
           <p>Color: {order.requirements.color}</p>
           <p>Style: {order.requirements.style}</p>
           <p>Special Instructions: {order.requirements.specialInstructions}</p>
+        </div>
+      )}
+
+      {/* Show chat button if order has been accepted */}
+      {order.status === 'accepted' && order.tailor && (
+        <div className="card">
+          <h3>Communication</h3>
+          <ChatButton 
+            orderId={order._id} 
+            orderTitle={order.title}
+          />
         </div>
       )}
 

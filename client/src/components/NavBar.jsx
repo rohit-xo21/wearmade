@@ -37,6 +37,7 @@ const NavBar = () => {
         </h1>
         
         <div className="nav-links">
+          <Link to="/explore">Explore</Link>
           {user ? (
             <>
               <span>Welcome, {user.name}</span>

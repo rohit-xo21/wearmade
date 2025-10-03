@@ -16,7 +16,11 @@ import TailorsList from './pages/customer/TailorsList';
 import TailorDashboard from './pages/tailor/Dashboard';
 import RequestsList from './pages/tailor/RequestsList';
 import RequestDetails from './pages/tailor/RequestDetails';
+import OrderManagement from './pages/tailor/OrderManagement';
+import TailorOrderDetails from './pages/tailor/OrderDetails';
 import Portfolio from './pages/tailor/Portfolio';
+import TailorPortfolio from './pages/TailorPortfolio';
+import ExplorePage from './pages/ExplorePage';
 import PaymentPage from './pages/PaymentPage';
 import MessagesPage from './pages/MessagesPage';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -69,6 +73,10 @@ function App() {
           </ProtectedRoute>
         } />
 
+        {/* Public Routes */}
+        <Route path="/explore" element={<ExplorePage />} />
+        <Route path="/tailor/:id/portfolio" element={<TailorPortfolio />} />
+
         {/* Tailor Routes */}
         <Route path="/tailor/dashboard" element={
           <ProtectedRoute allowedRoles={['tailor']}>
@@ -88,6 +96,16 @@ function App() {
         <Route path="/tailor/portfolio" element={
           <ProtectedRoute allowedRoles={['tailor']}>
             <Portfolio />
+          </ProtectedRoute>
+        } />
+        <Route path="/tailor/orders" element={
+          <ProtectedRoute allowedRoles={['tailor']}>
+            <OrderManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/tailor/orders/:id" element={
+          <ProtectedRoute allowedRoles={['tailor']}>
+            <TailorOrderDetails />
           </ProtectedRoute>
         } />
 

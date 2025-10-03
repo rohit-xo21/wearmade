@@ -17,7 +17,7 @@ const TailorDashboard = () => {
     try {
       const [userRes, ordersRes, requestsRes] = await Promise.all([
         api.get('/auth/me'),
-        api.get('/orders'),
+        api.get('/orders?status=accepted,in_progress'),
         api.get('/orders?status=pending')
       ]);
       
@@ -56,10 +56,30 @@ const TailorDashboard = () => {
         <Link to="/tailor/requests" className="btn btn-primary">
           View Requests
         </Link>
+        <Link to="/tailor/orders" className="btn btn-success">
+          Manage Orders
+        </Link>
         <Link to="/tailor/portfolio" className="btn">
           Manage Portfolio
         </Link>
       </div>
+
+      <h2>Active Orders</h2>
+      {orders.length > 0 ? (
+        <SimpleTable
+          headers={['Title', 'Customer', 'Status', 'Price', 'Actions']}
+          data={orders.map(order => ({
+            title: order.title,
+            customer: order.customer?.name,
+            status: order.status,
+            price: `$${order.finalPrice || 'TBD'}`,
+            actions: order._id
+          }))}
+          onRowClick={(row) => window.location.href = `/tailor/orders/${row.actions}`}
+        />
+      ) : (
+        <div className="message info">No active orders</div>
+      )}
 
       <h2>Recent Requests</h2>
       <SimpleTable

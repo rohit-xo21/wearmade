@@ -9,7 +9,8 @@ const {
   acceptEstimate,
   updateProgress,
   completeOrder,
-  cancelOrder
+  cancelOrder,
+  addReview
 } = require('../controllers/orderController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 const { uploadFields, uploadMultiple } = require('../middleware/upload');
@@ -102,5 +103,10 @@ router.post('/:id/complete',
 // @route   POST /api/orders/:id/cancel
 // @access  Private (Customer or assigned Tailor)
 router.post('/:id/cancel', protect, cancelOrder);
+
+// @desc    Add review to completed order
+// @route   POST /api/orders/:id/review
+// @access  Private (Customer only)
+router.post('/:id/review', protect, authorize('customer'), addReview);
 
 module.exports = router;

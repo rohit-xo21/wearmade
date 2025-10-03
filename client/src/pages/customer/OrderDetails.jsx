@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../../api/axios';
+import ChatButton from '../../components/chat/ChatButton';
+import RatingForm from '../../components/RatingForm';
 
 const OrderDetails = () => {
   const [order, setOrder] = useState(null);
@@ -29,6 +31,10 @@ const OrderDetails = () => {
     } catch (error) {
       console.error('Failed to fetch order:', error);
     }
+  };
+
+  const handleRatingSubmitted = () => {
+    fetchOrderData(); // Refresh order data to show the review
   };
 
   const acceptEstimate = async (tailorId) => {
@@ -97,6 +103,54 @@ const OrderDetails = () => {
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Show chat button if order has been accepted and has a tailor */}
+      {order.status === 'accepted' && order.tailor && (
+        <div className="card">
+          <h3>Communication</h3>
+          <ChatButton 
+            orderId={order._id} 
+            orderTitle={order.title}
+          />
+        </div>
+      )}
+
+      {/* Show rating form for completed orders */}
+      {order.status === 'completed' && !order.review?.customer && (
+        <RatingForm 
+          orderId={order._id} 
+          onRatingSubmitted={handleRatingSubmitted}
+        />
+      )}
+
+      {/* Show existing review */}
+      {order.review?.customer && (
+        <div className="card">
+          <h3>Your Review</h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ display: 'flex' }}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <span 
+                  key={star}
+                  style={{ 
+                    color: star <= order.review.customer.rating ? '#ffc107' : '#ddd',
+                    fontSize: '20px'
+                  }}
+                >
+                  ★
+                </span>
+              ))}
+            </div>
+            <span>{order.review.customer.rating}/5</span>
+          </div>
+          {order.review.customer.comment && (
+            <p style={{ marginTop: '10px' }}>"{order.review.customer.comment}"</p>
+          )}
+          <p style={{ fontSize: '12px', color: '#666' }}>
+            Reviewed on {new Date(order.review.customer.createdAt).toLocaleDateString()}
+          </p>
         </div>
       )}
 
