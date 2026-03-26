@@ -30,7 +30,7 @@ const Portfolio = () => {
 
   const fetchPortfolio = async () => {
     try {
-      const response = await api.get('/portfolio');
+      const response = await api.get('/portfolio/my-items');
       setPortfolioItems(response.data.data.docs || []);
     } catch (error) {
       console.error('Failed to fetch portfolio:', error);
@@ -359,7 +359,7 @@ const Portfolio = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Price Range ($)
+                  Price Range (INR)
                 </label>
                 <div className="grid grid-cols-2 gap-4">
                   <input
@@ -369,7 +369,7 @@ const Portfolio = () => {
                     value={formData.priceRange.min}
                     onChange={(e) => handleChange(e, 'priceRange')}
                     min="0"
-                    step="0.01"
+                    step="1"
                     required
                     className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-colors"
                   />
@@ -380,7 +380,7 @@ const Portfolio = () => {
                     value={formData.priceRange.max}
                     onChange={(e) => handleChange(e, 'priceRange')}
                     min={formData.priceRange.min || "0"}
-                    step="0.01"
+                    step="1"
                     required
                     className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-colors"
                   />
@@ -459,7 +459,7 @@ const Portfolio = () => {
                     
                     <div className="flex items-center justify-between">
                       <span className="text-gray-500">Price Range</span>
-                      <span className="font-medium">${item.priceRange?.min} - ${item.priceRange?.max}</span>
+                      <span className="font-medium">₹{item.priceRange?.min} - ₹{item.priceRange?.max}</span>
                     </div>
                     
                     <div className="flex items-center justify-between">
