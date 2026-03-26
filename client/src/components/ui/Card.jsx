@@ -5,7 +5,7 @@ const Card = React.forwardRef(({ className, ...props }, ref) => (
   <div
     ref={ref}
     className={clsx(
-      'rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow duration-300',
+      'rounded-2xl border border-[#e8e0d4] bg-white/95 shadow-sm hover:shadow-md transition-shadow duration-300',
       className
     )}
     {...props}
