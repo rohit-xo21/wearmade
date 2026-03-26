@@ -37,9 +37,9 @@ const OrderDetails = () => {
     fetchOrderData();
   };
 
-  const acceptEstimate = async (tailorId) => {
+  const acceptEstimate = async (estimateId, tailorId) => {
     try {
-      await api.post(`/orders/${id}/accept-estimate`, { tailorId });
+      await api.post(`/orders/${id}/accept-estimate`, { estimateId, tailorId });
       
       try {
         await api.post('/chat/create', { orderId: id });
@@ -51,7 +51,7 @@ const OrderDetails = () => {
       alert('Estimate accepted! You can now chat with your tailor from the Messages section.');
     } catch (error) {
       console.error('Failed to accept estimate:', error);
-      alert('Failed to accept estimate. Please try again.');
+      alert(error.response?.data?.message || 'Failed to accept estimate. Please try again.');
     }
   };
 
@@ -263,7 +263,7 @@ const OrderDetails = () => {
                 {estimate.status === 'pending' && order.status !== 'accepted' && (
                   <button 
                     className="bg-gray-900 text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-gray-800 transition-colors"
-                    onClick={() => acceptEstimate(estimate.tailor._id)}
+                    onClick={() => acceptEstimate(estimate._id, estimate.tailor?._id)}
                   >
                     Accept Estimate
                   </button>

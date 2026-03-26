@@ -443,7 +443,7 @@ const submitEstimate = async (req, res) => {
 // @access  Private (Customer only)
 const acceptEstimate = async (req, res) => {
   try {
-    const { tailorId } = req.body;
+    const { tailorId, estimateId } = req.body;
 
     const order = await Order.findById(req.params.id)
       .populate('customer', 'name email')
@@ -453,23 +453,38 @@ const acceptEstimate = async (req, res) => {
       return res.status(404).json({ message: 'Order not found' });
     }
 
+    if (order.status !== 'quoted') {
+      return res.status(400).json({ message: 'Order is not ready for estimate acceptance' });
+    }
+
     // Check if user owns this order
     if (order.customer._id.toString() !== req.user.id) {
       return res.status(403).json({ message: 'Access denied' });
     }
 
-    // Find the estimate
-    const estimate = order.estimates.find(
-      est => est.tailor._id.toString() === tailorId
-    );
+    // Find estimate by estimateId first, then fallback to tailorId for backwards compatibility.
+    const estimate = order.estimates.find((est) => {
+      const currentEstimateId = est?._id?.toString();
+      const currentTailorId = est?.tailor?._id?.toString?.() || est?.tailor?.toString?.();
+
+      if (estimateId && currentEstimateId === estimateId.toString()) {
+        return true;
+      }
+
+      if (tailorId && currentTailorId === tailorId.toString()) {
+        return true;
+      }
+
+      return false;
+    });
 
     if (!estimate) {
       return res.status(404).json({ message: 'Estimate not found' });
     }
 
     // Update order
-    order.tailor = tailorId;
-    order.selectedEstimate = tailorId;
+    order.tailor = estimate.tailor._id;
+    order.selectedEstimate = estimate.tailor._id;
     order.finalPrice = estimate.price;
     order.status = 'accepted';
 
