@@ -28,11 +28,24 @@ const orderSchema = new mongoose.Schema({
   category: {
     type: String,
     required: [true, 'Please specify a category'],
-    enum: ['suit', 'dress', 'shirt', 'pants', 'skirt', 'jacket', 'blouse', 'other']
+    enum: ['suit', 'dress', 'shirt', 'pants', 'skirt', 'jacket', 'blouse', 'lehenga', 'kurta', 'sherwani', 'saree_blouse', 'other']
   },
   garmentType: {
     type: String,
-    enum: ['new', 'alteration', 'repair']
+    enum: ['new', 'alteration', 'repair'],
+    default: 'new'
+  },
+
+  // Customer details for the order
+  gender: {
+    type: String,
+    enum: ['male', 'female', 'unisex'],
+    required: [true, 'Please specify gender']
+  },
+  size: {
+    type: String,
+    enum: ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', 'custom'],
+    default: 'custom'
   },
   
   // Requirements
@@ -40,6 +53,7 @@ const orderSchema = new mongoose.Schema({
     fabric: String,
     color: String,
     style: String,
+    occasion: String,
     specialInstructions: String,
     urgency: {
       type: String,
@@ -58,21 +72,28 @@ const orderSchema = new mongoose.Schema({
     publicId: String
   }],
   
-  // Measurements
+  // Measurements (all in inches) — only relevant fields are filled per category
   measurements: {
+    // Upper body
     chest: Number,
     waist: Number,
     hip: Number,
     shoulder: Number,
-    sleeve: Number,
+    sleeveLength: Number,
     neck: Number,
+    upperBodyLength: Number,
+    // Lower body
     inseam: Number,
-    length: Number,
+    outseam: Number,
+    thigh: Number,
+    rise: Number,
+    // General
+    fullLength: Number,
     // Custom measurements
     custom: [{
       name: String,
       value: Number,
-      unit: String
+      unit: { type: String, default: 'inches' }
     }]
   },
   
