@@ -1,6 +1,28 @@
 const Portfolio = require('../models/Portfolio');
 const { cloudinary } = require('../middleware/upload');
 
+const parsePortfolioPriceRange = (body) => {
+  const minRaw = body?.['priceRange[min]'] ?? body?.priceRange?.min ?? body?.priceRangeMin;
+  const maxRaw = body?.['priceRange[max]'] ?? body?.priceRange?.max ?? body?.priceRangeMax;
+
+  const min = parseFloat(minRaw);
+  const max = parseFloat(maxRaw);
+
+  if (Number.isNaN(min) || Number.isNaN(max)) {
+    return { error: 'Minimum and maximum price are required' };
+  }
+
+  if (min < 0 || max < 0) {
+    return { error: 'Price values cannot be negative' };
+  }
+
+  if (max <= min) {
+    return { error: 'Maximum price must be greater than minimum price' };
+  }
+
+  return { value: { min, max } };
+};
+
 // @desc    Create portfolio item
 // @route   POST /api/portfolio
 // @access  Private (Tailor only)
@@ -17,33 +39,14 @@ const createPortfolioItem = async (req, res) => {
       difficulty
     } = req.body;
 
-    // Debug: Log the request body to see what we're receiving
-    console.log('Request body:', req.body);
-    console.log('Price min:', req.body['priceRange[min]']);
-    console.log('Price max:', req.body['priceRange[max]']);
-
-    // Parse priceRange from FormData structure
-    const minPrice = req.body['priceRange[min]'];
-    const maxPrice = req.body['priceRange[max]'];
-    
-    const priceRange = {
-      min: minPrice ? parseFloat(minPrice) : 0,
-      max: maxPrice ? parseFloat(maxPrice) : 0
-    };
-
-    // Validate parsed prices
-    if (isNaN(priceRange.min) || isNaN(priceRange.max)) {
+    const parsedPriceRange = parsePortfolioPriceRange(req.body);
+    if (parsedPriceRange.error) {
       return res.status(400).json({ 
         success: false,
-        message: 'Invalid price range values',
-        debug: {
-          minPrice,
-          maxPrice,
-          parsedMin: priceRange.min,
-          parsedMax: priceRange.max
-        }
+        message: parsedPriceRange.error
       });
     }
+    const priceRange = parsedPriceRange.value;
 
     // Use processed images from middleware
     const images = req.uploadedImages || [];
@@ -232,7 +235,7 @@ const deletePortfolioItem = async (req, res) => {
       }
     }
 
-    await portfolioItem.remove();
+    await portfolioItem.deleteOne();
 
     res.json({
       success: true,
