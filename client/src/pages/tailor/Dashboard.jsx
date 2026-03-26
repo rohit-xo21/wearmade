@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../api/axios';
-import SimpleTable from '../../components/SimpleTable';
 import Pagination from '../../components/Pagination';
+import PageLoader from '../../components/ui/PageLoader';
 
 const TailorDashboard = () => {
   const [, setUser] = useState(null);
@@ -56,11 +56,11 @@ const TailorDashboard = () => {
     setRequestsPage(page);
   };
 
-  if (loading) return <div className="loading">Loading...</div>;
+  if (loading) return <PageLoader label="Loading dashboard..." />;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-10 sm:pt-8 sm:pb-12">
         {/* Header */}
         <div className="mb-12">
           <h1 className="text-4xl font-light text-gray-900 mb-2">Welcome back</h1>
@@ -100,6 +100,12 @@ const TailorDashboard = () => {
                 className="bg-gray-900 text-white px-8 py-4 rounded-full text-lg font-medium hover:bg-gray-800 transition-colors text-center cursor-pointer"
               >
                 View Requests
+              </Link>
+              <Link 
+                to="/tailor/profile" 
+                className="border-2 border-gray-300 text-gray-700 px-8 py-4 rounded-full text-lg font-medium hover:border-gray-900 hover:text-gray-900 transition-colors text-center cursor-pointer"
+              >
+                Edit Profile
               </Link>
               <Link 
                 to="/tailor/orders" 
@@ -163,7 +169,7 @@ const TailorDashboard = () => {
                               {order.status.replace('_', ' ')}
                             </span>
                           </td>
-                          <td className="px-8 py-4 text-sm text-gray-600">${order.finalPrice || 'TBD'}</td>
+                          <td className="px-8 py-4 text-sm text-gray-600">{order.finalPrice != null ? `₹${order.finalPrice}` : 'TBD'}</td>
                           <td className="px-8 py-4">
                             <Link 
                               to={`/tailor/orders/${order._id}`}
@@ -210,7 +216,7 @@ const TailorDashboard = () => {
                         <th className="px-8 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wide">Title</th>
                         <th className="px-8 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wide">Category</th>
                         <th className="px-8 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wide">Budget</th>
-                        <th className="px-8 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wide">Deadline</th>
+                        <th className="px-8 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wide">Delivery Date</th>
                         <th className="px-8 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wide">Actions</th>
                       </tr>
                     </thead>
@@ -218,12 +224,12 @@ const TailorDashboard = () => {
                       {requests.slice(0, 5).map((request, index) => (
                         <tr key={index} className="hover:bg-gray-50 transition-colors">
                           <td className="px-8 py-4 text-sm font-medium text-gray-900">{request.title}</td>
-                          <td className="px-8 py-4 text-sm text-gray-600 capitalize">{request.category}</td>
+                          <td className="px-8 py-4 text-sm text-gray-600 capitalize">{request.category?.replace('_', ' ')}</td>
                           <td className="px-8 py-4 text-sm text-gray-600">
-                            ${request.budget?.min}-${request.budget?.max}
+                            {request.budget?.min != null ? `₹${request.budget.min} - ₹${request.budget.max}` : 'Not set'}
                           </td>
                           <td className="px-8 py-4 text-sm text-gray-600">
-                            {new Date(request.deadline).toLocaleDateString()}
+                            {request.preferredDeliveryDate ? new Date(request.preferredDeliveryDate).toLocaleDateString() : 'Not specified'}
                           </td>
                           <td className="px-8 py-4">
                             <Link 
@@ -293,8 +299,8 @@ const TailorDashboard = () => {
                         <tr key={index} className="hover:bg-gray-50 transition-colors">
                           <td className="px-8 py-4 text-sm font-medium text-gray-900">{order.title}</td>
                           <td className="px-8 py-4 text-sm text-gray-600">{order.customer?.name}</td>
-                          <td className="px-8 py-4 text-sm text-gray-600 capitalize">{order.category}</td>
-                          <td className="px-8 py-4 text-sm text-gray-600">${order.finalPrice || 'N/A'}</td>
+                          <td className="px-8 py-4 text-sm text-gray-600 capitalize">{order.category?.replace('_', ' ')}</td>
+                          <td className="px-8 py-4 text-sm text-gray-600">{order.finalPrice != null ? `₹${order.finalPrice}` : 'N/A'}</td>
                           <td className="px-8 py-4 text-sm text-gray-600">
                             {new Date(order.completedAt || order.updatedAt).toLocaleDateString()}
                           </td>

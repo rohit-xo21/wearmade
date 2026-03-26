@@ -58,7 +58,7 @@ const MessagesPage = () => {
       setActiveChat(prevActiveChat => {
         if (prevActiveChat && data.chatId === prevActiveChat._id) {
           // Only add message to UI if it's from someone else (avoid duplicating our own messages)
-          if (data.senderId !== user.id) {
+          if (data.senderId !== user?._id && data.senderId !== user?.id) {
             setTimeout(scrollToBottom, 100);
             return {
               ...prevActiveChat,
@@ -84,7 +84,7 @@ const MessagesPage = () => {
       socket.off('chat:message', handleNewMessage);
       socket.off('chat:notify', handleChatNotify);
     };
-  }, [user.id, fetchChats]);
+  }, [user?._id, user?.id, fetchChats]);
 
   // Auto scroll to bottom when messages change
   useEffect(() => {
@@ -94,6 +94,11 @@ const MessagesPage = () => {
   }, [activeChat?.messages?.length]);
 
   const openChat = async (chat) => {
+    if (!chat?.order?._id) {
+      setActiveChat(chat || null);
+      return;
+    }
+
     try {
       // Get the latest chat data with all messages
       const response = await api.get(`/chat/order/${chat.order._id}`);
@@ -112,7 +117,7 @@ const MessagesPage = () => {
         fetchChats(false);
         
         // Emit event to update navbar badge
-        socket.emit('chat:messagesRead', { userId: user.id });
+        socket.emit('chat:messagesRead', { userId: user?._id || user?.id });
       } catch (error) {
         console.error('Failed to mark messages as read:', error);
       }
@@ -256,7 +261,10 @@ const MessagesPage = () => {
                       </div>
                     ) : (
                       (activeChat.messages || []).map((m, i) => {
-                        const isCurrentUser = m.sender._id === user?._id || m.sender._id === user?.id;
+                        const senderId = m?.sender?._id || m?.sender;
+                        const senderName = m?.sender?.name || 'Unknown';
+                        const messageTime = m?.timestamp ? new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+                        const isCurrentUser = senderId === user?._id || senderId === user?.id;
                         return (
                           <div key={m._id || i} className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
                             <div className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
@@ -268,12 +276,12 @@ const MessagesPage = () => {
                                 <span className={`text-xs font-medium ${
                                   isCurrentUser ? 'text-blue-100' : 'text-gray-500'
                                 }`}>
-                                  {m.sender?.name || 'Unknown'}
+                                  {senderName}
                                 </span>
                                 <span className={`text-xs ${
                                   isCurrentUser ? 'text-blue-100' : 'text-gray-500'
                                 }`}>
-                                  {new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  {messageTime}
                                 </span>
                               </div>
                               <p className="text-sm">{m.message}</p>
