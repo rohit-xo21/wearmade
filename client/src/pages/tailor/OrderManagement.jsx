@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import api from '../../api/axios';
-import SimpleTable from '../../components/SimpleTable';
 import Pagination from '../../components/Pagination';
 
 const OrderManagement = () => {
@@ -56,36 +55,6 @@ const OrderManagement = () => {
     setCurrentPage(page);
   };
 
-  const updateOrderProgress = async (orderId, stage, status, notes = '') => {
-    try {
-      await api.post(`/orders/${orderId}/progress`, {
-        stage,
-        status,
-        notes
-      });
-      
-      // Refresh orders
-      fetchOrders();
-      alert('Progress updated successfully!');
-    } catch (error) {
-      console.error('Failed to update progress:', error);
-      alert('Failed to update progress. Please try again.');
-    }
-  };
-
-  const completeOrder = async (orderId) => {
-    if (window.confirm('Are you sure you want to mark this order as completed?')) {
-      try {
-        await api.post(`/orders/${orderId}/complete`);
-        fetchOrders();
-        alert('Order marked as completed!');
-      } catch (error) {
-        console.error('Failed to complete order:', error);
-        alert('Failed to complete order. Please try again.');
-      }
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -99,9 +68,11 @@ const OrderManagement = () => {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-light text-gray-900 mb-2">
-            {status === 'completed' ? 'Completed Orders' : 'Order Management'}
+            {statusFilter === 'completed' ? 'Completed Orders' : 'Order Management'}
           </h1>
-          <p className="text-gray-600">Manage your active orders and track progress</p>
+          <p className="text-gray-600">
+            {statusFilter === 'completed' ? 'Review your delivered work' : 'Manage active assigned orders'}
+          </p>
         </div>
         <Link 
           to="/tailor/dashboard" 
@@ -134,57 +105,21 @@ const OrderManagement = () => {
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   <div>
                     <div className="text-sm text-gray-500">Price</div>
-                    <div className="font-medium text-gray-900">${order.finalPrice}</div>
+                    <div className="font-medium text-gray-900">
+                      {order.finalPrice != null ? `₹${order.finalPrice}` : 'Not final yet'}
+                    </div>
                   </div>
                   <div>
                     <div className="text-sm text-gray-500">Category</div>
-                    <div className="font-medium text-gray-900 capitalize">{order.category}</div>
+                    <div className="font-medium text-gray-900 capitalize">{order.category?.replace('_', ' ')}</div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500">Created</div>
-                    <div className="font-medium text-gray-900">{new Date(order.createdAt).toLocaleDateString()}</div>
+                    <div className="text-sm text-gray-500">Delivery By</div>
+                    <div className="font-medium text-gray-900">
+                      {order.preferredDeliveryDate ? new Date(order.preferredDeliveryDate).toLocaleDateString() : 'Not specified'}
+                    </div>
                   </div>
                 </div>
-                
-                {/* Progress Tracking - Only show for non-completed orders */}
-                {order.status !== 'completed' && (
-                  <div className="border-t border-gray-100 pt-6">
-                    <h4 className="font-medium text-gray-900 mb-4">Progress Tracking</h4>
-                    <div className="grid grid-cols-2 gap-3 mb-4">
-                      <button 
-                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
-                        onClick={() => updateOrderProgress(order._id, 'cutting', 'in_progress', 'Started cutting fabric')}
-                      >
-                        Start Cutting
-                      </button>
-                      <button 
-                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
-                        onClick={() => updateOrderProgress(order._id, 'stitching', 'in_progress', 'Started stitching')}
-                      >
-                        Start Stitching
-                      </button>
-                      <button 
-                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
-                        onClick={() => updateOrderProgress(order._id, 'fitting', 'in_progress', 'Ready for fitting')}
-                      >
-                        Ready for Fitting
-                      </button>
-                      <button 
-                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
-                        onClick={() => updateOrderProgress(order._id, 'finishing', 'in_progress', 'Final finishing touches')}
-                      >
-                        Finishing
-                      </button>
-                    </div>
-                    
-                    <button 
-                      className="w-full bg-gray-900 text-white py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors"
-                      onClick={() => completeOrder(order._id)}
-                    >
-                      Mark as Completed
-                    </button>
-                  </div>
-                )}
 
                 {/* Order Details Link */}
                 <div className="mt-6">
@@ -221,18 +156,18 @@ const OrderManagement = () => {
               </svg>
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              {status === 'completed' ? 'No Completed Orders' : 'No Active Orders'}
+              {statusFilter === 'completed' ? 'No Completed Orders' : 'No Active Orders'}
             </h3>
             <p className="text-gray-600 mb-6 max-w-md mx-auto">
-              {status === 'completed' 
+              {statusFilter === 'completed' 
                 ? 'Completed orders will appear here to showcase your finished work and craftsmanship.'
-                : 'Orders will appear here after customers accept your estimates and make payment. You can then track progress and manage the work.'
+                : 'Orders appear here after customers accept your estimate and payment is confirmed.'
               }
             </p>
             <div className="space-y-3 text-sm text-gray-500">
-              <p>✓ Track order progress through different stages</p>
-              <p>✓ Update customers on work status</p>
-              <p>✓ Mark orders as completed when finished</p>
+              <p>✓ Open each order for full progress and communication tools</p>
+              <p>✓ Keep updates centralized in the order details page</p>
+              <p>✓ Maintain cleaner workflow for assigned jobs</p>
             </div>
           </div>
         </div>

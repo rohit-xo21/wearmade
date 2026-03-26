@@ -292,12 +292,14 @@ const googleAuth = (req, res) => {
 const googleCallback = (req, res) => {
   try {
     const token = generateToken(req.user._id);
+    const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
     
     // Redirect to frontend with token
-    res.redirect(`${process.env.CLIENT_URL}/auth/success?token=${token}`);
+    res.redirect(`${clientUrl}/auth/success?token=${token}`);
   } catch (error) {
     console.error('Google callback error:', error);
-    res.redirect(`${process.env.CLIENT_URL}/auth/error`);
+    const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+    res.redirect(`${clientUrl}/auth/error`);
   }
 };
 

@@ -13,6 +13,11 @@ const app = createApp();
 describe('Orders', () => {
   let customerToken, tailorToken;
   let customerId, tailorId;
+  const baseOrderFields = {
+    gender: 'male',
+    garmentType: 'new',
+    size: 'custom'
+  };
 
   beforeAll(async () => {
     // Connection is handled by the app
@@ -75,6 +80,7 @@ describe('Orders', () => {
         title: 'Custom Suit Order',
         description: 'I need a custom tailored suit for my wedding',
         category: 'suit',
+        ...baseOrderFields,
         garmentType: 'new',
         requirements: {
           fabric: 'Wool',
@@ -108,7 +114,8 @@ describe('Orders', () => {
       const orderData = {
         title: 'Test Order',
         description: 'Test description',
-        category: 'suit'
+        category: 'suit',
+        ...baseOrderFields
       };
 
       await request(app)
@@ -122,7 +129,8 @@ describe('Orders', () => {
       const orderData = {
         title: 'Test Order',
         description: 'Test description',
-        category: 'suit'
+        category: 'suit',
+        ...baseOrderFields
       };
 
       await request(app)
@@ -156,6 +164,7 @@ describe('Orders', () => {
         title: 'Test Order',
         description: 'Test description for the order',
         category: 'suit',
+        ...baseOrderFields,
         status: 'pending'
       });
       await order.save();
@@ -202,6 +211,7 @@ describe('Orders', () => {
         title: 'Test Order',
         description: 'Test description for the order',
         category: 'suit',
+        ...baseOrderFields,
         status: 'pending'
       });
       await order.save();
@@ -271,6 +281,7 @@ describe('Orders', () => {
         title: 'Test Order',
         description: 'Test description for the order',
         category: 'suit',
+        ...baseOrderFields,
         status: 'quoted',
         estimates: [{
           tailor: tailorId,
@@ -314,6 +325,7 @@ describe('Orders', () => {
         title: 'Test Order',
         description: 'Test description for the order',
         category: 'suit',
+        ...baseOrderFields,
         status: 'pending'
       });
       await order.save();

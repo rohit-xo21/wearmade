@@ -3,6 +3,85 @@ const User = require('../models/User');
 const { sendEmail, emailTemplates } = require('../utils/emailService');
 const { cloudinary } = require('../middleware/upload');
 
+const normalizeMeasurements = (measurements = {}) => {
+  const parsed = {};
+  if (!measurements || typeof measurements !== 'object') {
+    return parsed;
+  }
+
+  const aliases = {
+    shoulders: 'shoulder',
+    armLength: 'sleeveLength',
+    sleeve: 'sleeveLength',
+    length: 'fullLength'
+  };
+
+  const numericFields = [
+    'chest', 'waist', 'hip', 'shoulder', 'sleeveLength', 'neck',
+    'upperBodyLength', 'inseam', 'outseam', 'thigh', 'rise', 'fullLength'
+  ];
+
+  for (const field of numericFields) {
+    const raw = measurements[field];
+    if (raw !== undefined && raw !== '') {
+      const value = parseFloat(raw);
+      if (!Number.isNaN(value) && value > 0) {
+        parsed[field] = value;
+      }
+    }
+  }
+
+  for (const [from, to] of Object.entries(aliases)) {
+    if (parsed[to] !== undefined) {
+      continue;
+    }
+
+    const raw = measurements[from];
+    if (raw !== undefined && raw !== '') {
+      const value = parseFloat(raw);
+      if (!Number.isNaN(value) && value > 0) {
+        parsed[to] = value;
+      }
+    }
+  }
+
+  if (Array.isArray(measurements.custom)) {
+    parsed.custom = measurements.custom
+      .filter((item) => item && item.name && item.value !== undefined && item.value !== '')
+      .map((item) => ({
+        name: item.name,
+        value: parseFloat(item.value),
+        unit: item.unit || 'inches'
+      }))
+      .filter((item) => !Number.isNaN(item.value) && item.value > 0);
+  }
+
+  return parsed;
+};
+
+const normalizeBudget = (budget = {}) => {
+  const parsed = {};
+  if (!budget || typeof budget !== 'object') {
+    return parsed;
+  }
+
+  if (budget.min !== undefined && budget.min !== '') {
+    const min = parseFloat(budget.min);
+    if (!Number.isNaN(min) && min >= 0) {
+      parsed.min = min;
+    }
+  }
+
+  if (budget.max !== undefined && budget.max !== '') {
+    const max = parseFloat(budget.max);
+    if (!Number.isNaN(max) && max >= 0) {
+      parsed.max = max;
+    }
+  }
+
+  return parsed;
+};
+
 // @desc    Create new order
 // @route   POST /api/orders
 // @access  Private (Customer only)
@@ -13,11 +92,16 @@ const createOrder = async (req, res) => {
       description,
       category,
       garmentType,
+      gender,
+      size,
       requirements,
       measurements,
       budget,
       preferredDeliveryDate
     } = req.body;
+
+    const parsedMeasurements = normalizeMeasurements(measurements);
+    const parsedBudget = normalizeBudget(budget);
 
     // Process uploaded images
     let designImages = [];
@@ -43,10 +127,12 @@ const createOrder = async (req, res) => {
       title,
       description,
       category,
-      garmentType,
+      garmentType: garmentType || 'new',
+      gender,
+      size: size || 'custom',
       requirements,
-      measurements,
-      budget,
+      measurements: parsedMeasurements,
+      budget: parsedBudget,
       preferredDeliveryDate,
       designImages,
       referenceImages
@@ -189,9 +275,17 @@ const updateOrder = async (req, res) => {
       });
     }
 
+    const updates = { ...req.body };
+    if (req.body.measurements) {
+      updates.measurements = normalizeMeasurements(req.body.measurements);
+    }
+    if (req.body.budget) {
+      updates.budget = normalizeBudget(req.body.budget);
+    }
+
     order = await Order.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updates,
       { new: true, runValidators: true }
     ).populate('customer', 'name email');
 

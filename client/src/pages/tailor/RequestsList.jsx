@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../api/axios';
-import SimpleTable from '../../components/SimpleTable';
 import Pagination from '../../components/Pagination';
 
 const RequestsList = () => {
@@ -91,9 +90,9 @@ const RequestsList = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-gray-900">{request.customer?.name}</td>
-                    <td className="px-6 py-4 text-gray-600 capitalize">{request.category}</td>
+                    <td className="px-6 py-4 text-gray-600 capitalize">{request.category?.replace('_', ' ')}</td>
                     <td className="px-6 py-4 text-gray-600">
-                      ${request.budget?.min} - ${request.budget?.max}
+                      {request.budget?.min != null ? `₹${request.budget.min} - ₹${request.budget.max}` : 'Not set'}
                     </td>
                     <td className="px-6 py-4 text-gray-600">
                       {new Date(request.createdAt).toLocaleDateString()}

@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../api/axios';
-import SimpleTable from '../../components/SimpleTable';
-import Pagination from '../../components/Pagination';
+import PageLoader from '../../components/ui/PageLoader';
 
 const CustomerDashboard = () => {
   const [, setUser] = useState(null);
@@ -29,11 +28,11 @@ const CustomerDashboard = () => {
     }
   };
 
-  if (loading) return <div className="loading">Loading...</div>;
+  if (loading) return <PageLoader label="Loading dashboard..." />;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-10 sm:pt-8 sm:pb-12">
         {/* Header */}
         <div className="mb-12">
           <h1 className="text-4xl font-light text-gray-900 mb-2">Welcome back</h1>

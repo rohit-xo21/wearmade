@@ -89,7 +89,7 @@ const OrdersList = () => {
                     <td className="px-6 py-4">
                       <div>
                         <div className="text-lg font-medium text-gray-900">{order.title}</div>
-                        <div className="text-sm text-gray-500">{order.category}</div>
+                        <div className="text-sm text-gray-500 capitalize">{order.category?.replace('_', ' ')}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -98,7 +98,7 @@ const OrdersList = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-gray-900">
-                      {order.budget ? `$${order.budget.min} - $${order.budget.max}` : 'Not set'}
+                      {order.budget ? `₹${order.budget.min} - ₹${order.budget.max}` : 'Not set'}
                     </td>
                     <td className="px-6 py-4 text-gray-500">
                       {new Date(order.createdAt).toLocaleDateString()}

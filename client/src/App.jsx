@@ -20,6 +20,7 @@ import RequestDetails from './pages/tailor/RequestDetails';
 import OrderManagement from './pages/tailor/OrderManagement';
 import TailorOrderDetails from './pages/tailor/OrderDetails';
 import Portfolio from './pages/tailor/Portfolio';
+import TailorProfile from './pages/tailor/Profile';
 import TailorPortfolio from './pages/TailorPortfolio';
 import ExplorePage from './pages/ExplorePage';
 import PaymentPage from './pages/PaymentPage';
@@ -33,6 +34,8 @@ function App() {
   const location = useLocation();
   const hideFooterRoutes = [
     '/messages',
+    '/customer/dashboard',
+    '/tailor/dashboard',
     '/login',
     '/register', 
     '/forgot-password',
@@ -42,10 +45,20 @@ function App() {
     '/auth/error'
   ];
   const shouldHideFooter = hideFooterRoutes.includes(location.pathname);
+  const authRoutes = [
+    '/login',
+    '/register',
+    '/forgot-password',
+    '/reset-password',
+    '/verify-email',
+    '/auth/success',
+    '/auth/error'
+  ];
+  const shouldHideNavBar = authRoutes.some((route) => location.pathname.startsWith(route));
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <NavBar />
+    <div className="app-shell min-h-screen flex flex-col">
+      {!shouldHideNavBar && <NavBar />}
       <ScrollToTop />
       <main className="flex-1">
         <Routes>
@@ -66,6 +79,11 @@ function App() {
             </ProtectedRoute>
           } />
           <Route path="/customer/orders/new" element={
+            <ProtectedRoute allowedRoles={['customer']}>
+              <NewOrder />
+            </ProtectedRoute>
+          } />
+          <Route path="/customer/new-order" element={
             <ProtectedRoute allowedRoles={['customer']}>
               <NewOrder />
             </ProtectedRoute>
@@ -114,6 +132,11 @@ function App() {
           <Route path="/tailor/portfolio" element={
             <ProtectedRoute allowedRoles={['tailor']}>
               <Portfolio />
+            </ProtectedRoute>
+          } />
+          <Route path="/tailor/profile" element={
+            <ProtectedRoute allowedRoles={['tailor']}>
+              <TailorProfile />
             </ProtectedRoute>
           } />
           <Route path="/tailor/orders" element={

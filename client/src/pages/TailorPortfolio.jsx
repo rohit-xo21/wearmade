@@ -1,18 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../api/axios';
+import { useAuth } from '../hooks/useAuth';
+import PageLoader from '../components/ui/PageLoader';
 
 const TailorPortfolio = () => {
   const [tailor, setTailor] = useState(null);
   const [portfolioItems, setPortfolioItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const { id } = useParams();
+  const { user } = useAuth();
 
-  useEffect(() => {
-    fetchTailorData();
-  }, [id]);
-
-  const fetchTailorData = async () => {
+  const fetchTailorData = useCallback(async () => {
     try {
       const [tailorRes, portfolioRes] = await Promise.all([
         api.get(`/users/tailors/${id}`),
@@ -26,14 +25,14 @@ const TailorPortfolio = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchTailorData();
+  }, [fetchTailorData]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-      </div>
-    );
+    return <PageLoader label="Loading tailor portfolio..." />;
   }
   if (!tailor) {
     return (
@@ -116,7 +115,7 @@ const TailorPortfolio = () => {
           {tailor.priceRange && (
             <div>
               <h4 className="font-medium text-gray-900 mb-2">Price Range</h4>
-              <p className="text-gray-600">${tailor.priceRange.min} - ${tailor.priceRange.max}</p>
+              <p className="text-gray-600">₹{tailor.priceRange.min} - ₹{tailor.priceRange.max}</p>
             </div>
           )}
         </div>
@@ -157,7 +156,7 @@ const TailorPortfolio = () => {
                   <div className="space-y-2 text-sm text-gray-600 mb-4">
                     <div><span className="font-medium">Category:</span> {item.category}</div>
                     {item.priceRange && (
-                      <div><span className="font-medium">Price:</span> ${item.priceRange.min} - ${item.priceRange.max}</div>
+                      <div><span className="font-medium">Price:</span> ₹{item.priceRange.min} - ₹{item.priceRange.max}</div>
                     )}
                     {item.timeToComplete && (
                       <div><span className="font-medium">Time:</span> {item.timeToComplete} days</div>

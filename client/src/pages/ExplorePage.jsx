@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/axios';
+import { useAuth } from '../hooks/useAuth';
+import PageLoader from '../components/ui/PageLoader';
 
 const ExplorePage = () => {
   const [portfolioItems, setPortfolioItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchPortfolioItems();
@@ -97,7 +100,7 @@ const ExplorePage = () => {
                         </div>
                         <div className="text-right">
                           <p className="font-medium text-gray-900">
-                            ${item.priceRange?.min} - ${item.priceRange?.max}
+                            ₹{item.priceRange?.min} - ₹{item.priceRange?.max}
                           </p>
                           <div className="flex items-center gap-3 text-xs text-gray-500">
                             <span>{item.views || 0} views</span>
