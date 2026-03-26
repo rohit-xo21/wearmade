@@ -77,9 +77,10 @@ const orderSchema = new mongoose.Schema({
     // Upper body
     chest: Number,
     waist: Number,
+    shoulders: Number, // Changed from 'shoulder' to 'shoulders'
+    armLength: Number, // Added armLength field
     hip: Number,
-    shoulder: Number,
-    sleeveLength: Number,
+    sleeve: Number,
     neck: Number,
     upperBodyLength: Number,
     // Lower body
