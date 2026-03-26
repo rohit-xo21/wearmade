@@ -152,7 +152,13 @@ const Orders = () => {
                           </h3>
                           
                           <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
-                            <span className="capitalize">{order.category}</span>
+                            <span className="capitalize">{order.category?.replace('_', ' ')}</span>
+                            {order.gender && (
+                              <>
+                                <span>•</span>
+                                <span className="capitalize">{order.gender}</span>
+                              </>
+                            )}
                             <span>•</span>
                             <span>{formatDate(order.createdAt)}</span>
                           </div>
@@ -183,7 +189,7 @@ const Orders = () => {
                         {order.budget && (
                           <div className="flex items-center gap-2">
                             <span className="text-gray-500">Budget:</span>
-                            <span className="font-medium">${order.budget.min} - ${order.budget.max}</span>
+                            <span className="font-medium">₹{order.budget.min} - ₹{order.budget.max}</span>
                           </div>
                         )}
 

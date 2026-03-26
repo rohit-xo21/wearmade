@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import ChatButton from '../../components/chat/ChatButton';
+import { getFilledMeasurements, getMeasurementLabel } from '../../utils/measurements';
 
 const RequestDetails = () => {
   const [order, setOrder] = useState(null);
@@ -15,6 +16,9 @@ const RequestDetails = () => {
   const [error, setError] = useState('');
   const { id } = useParams();
   const navigate = useNavigate();
+  const filledMeasurements = getFilledMeasurements(order?.measurements);
+  const hasSubmittedEstimate = !!order?.estimates?.some(est => est.tailor?._id);
+  const canSubmitEstimate = order?.status === 'pending' && !hasSubmittedEstimate;
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -83,23 +87,35 @@ const RequestDetails = () => {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-8">
         <h2 className="text-2xl font-medium text-gray-900 mb-6">{order.title}</h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <div>
             <span className="block text-sm text-gray-500 mb-1">Category</span>
-            <p className="text-gray-900">{order.category}</p>
+            <p className="text-gray-900 capitalize">{order.category?.replace('_', ' ')}</p>
           </div>
           <div>
             <span className="block text-sm text-gray-500 mb-1">Customer</span>
             <p className="text-gray-900">{order.customer?.name}</p>
           </div>
           <div>
+            <span className="block text-sm text-gray-500 mb-1">Gender</span>
+            <p className="text-gray-900 capitalize">{order.gender || 'Not specified'}</p>
+          </div>
+          <div>
+            <span className="block text-sm text-gray-500 mb-1">Garment Type</span>
+            <p className="text-gray-900 capitalize">{order.garmentType || 'new'}</p>
+          </div>
+          <div>
+            <span className="block text-sm text-gray-500 mb-1">Size</span>
+            <p className="text-gray-900">{order.size || 'custom'}</p>
+          </div>
+          <div>
             <span className="block text-sm text-gray-500 mb-1">Budget</span>
             <p className="text-gray-900">
-              {order.budget ? `$${order.budget.min} - $${order.budget.max}` : 'Not specified'}
+              {order.budget?.min != null ? `₹${order.budget.min} - ₹${order.budget.max}` : 'Not specified'}
             </p>
           </div>
           <div>
-            <span className="block text-sm text-gray-500 mb-1">Deadline</span>
+            <span className="block text-sm text-gray-500 mb-1">Preferred Delivery Date</span>
             <p className="text-gray-900">
               {order.preferredDeliveryDate ? new Date(order.preferredDeliveryDate).toLocaleDateString() : 'Not specified'}
             </p>
@@ -113,26 +129,16 @@ const RequestDetails = () => {
       </div>
 
       {/* Measurements */}
-      {order.measurements && (
+      {filledMeasurements.length > 0 && (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-8">
           <h3 className="text-xl font-medium text-gray-900 mb-6">Measurements</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div className="text-center">
-              <span className="block text-2xl font-light text-gray-900">{order.measurements.chest}"</span>
-              <span className="text-sm text-gray-500">Chest</span>
-            </div>
-            <div className="text-center">
-              <span className="block text-2xl font-light text-gray-900">{order.measurements.waist}"</span>
-              <span className="text-sm text-gray-500">Waist</span>
-            </div>
-            <div className="text-center">
-              <span className="block text-2xl font-light text-gray-900">{order.measurements.shoulders}"</span>
-              <span className="text-sm text-gray-500">Shoulders</span>
-            </div>
-            <div className="text-center">
-              <span className="block text-2xl font-light text-gray-900">{order.measurements.armLength}"</span>
-              <span className="text-sm text-gray-500">Arm Length</span>
-            </div>
+            {filledMeasurements.map(([key, value]) => (
+              <div key={key} className="text-center">
+                <span className="block text-2xl font-light text-gray-900">{value}"</span>
+                <span className="text-sm text-gray-500">{getMeasurementLabel(key)}</span>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -153,6 +159,14 @@ const RequestDetails = () => {
             <div>
               <span className="block text-sm text-gray-500 mb-1">Style</span>
               <p className="text-gray-900">{order.requirements.style}</p>
+            </div>
+            <div>
+              <span className="block text-sm text-gray-500 mb-1">Occasion</span>
+              <p className="text-gray-900">{order.requirements.occasion || 'Not specified'}</p>
+            </div>
+            <div>
+              <span className="block text-sm text-gray-500 mb-1">Urgency</span>
+              <p className="text-gray-900 capitalize">{order.requirements.urgency || 'medium'}</p>
             </div>
             <div>
               <span className="block text-sm text-gray-500 mb-1">Special Instructions</span>
@@ -176,6 +190,16 @@ const RequestDetails = () => {
       {/* Estimate Form */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
         <h3 className="text-xl font-medium text-gray-900 mb-6">Submit Your Estimate</h3>
+
+        {!canSubmitEstimate && (
+          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <p className="text-sm text-amber-800">
+              {hasSubmittedEstimate
+                ? 'You have already submitted an estimate for this order.'
+                : 'This order is no longer accepting new estimates.'}
+            </p>
+          </div>
+        )}
         
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -187,7 +211,7 @@ const RequestDetails = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Price ($)
+                Price (INR)
               </label>
               <input
                 type="number"
@@ -195,8 +219,10 @@ const RequestDetails = () => {
                 value={estimate.price}
                 onChange={handleEstimateChange}
                 required
+                min="1"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-colors"
                 placeholder="Enter your price"
+                disabled={!canSubmitEstimate}
               />
             </div>
 
@@ -210,8 +236,10 @@ const RequestDetails = () => {
                 value={estimate.deliveryTime}
                 onChange={handleEstimateChange}
                 required
+                min="1"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-colors"
                 placeholder="Enter delivery time"
+                disabled={!canSubmitEstimate}
               />
             </div>
           </div>
@@ -227,12 +255,13 @@ const RequestDetails = () => {
               rows={4}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-colors"
               placeholder="Describe your approach, materials, timeline, etc."
+              disabled={!canSubmitEstimate}
             />
           </div>
 
           <button 
             type="submit" 
-            disabled={submitting}
+            disabled={submitting || !canSubmitEstimate}
             className="w-full bg-gray-900 text-white py-3 px-6 rounded-full font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting ? 'Submitting...' : 'Submit Estimate'}
